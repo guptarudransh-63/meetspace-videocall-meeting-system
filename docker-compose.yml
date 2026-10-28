@@ -1,0 +1,76 @@
+version: '3.8'
+
+services:
+  # MongoDB Database
+  mongodb:
+    image: mongo:7.0
+    container_name: meetspace-mongodb
+    restart: always
+    ports:
+      - '27017:27017'
+    volumes:
+      - mongo_data:/data/db
+    environment:
+      - MONGO_INITDB_DATABASE=meetspace
+    networks:
+      - meetspace-net
+
+  # LiveKit SFU Media Server
+  livekit:
+    image: livekit/livekit-server:latest
+    container_name: meetspace-livekit
+    restart: always
+    command: --config /etc/livekit.yaml
+    ports:
+      - '7880:7880'       # HTTP / WebSocket signaling
+      - '7881:7881'       # TCP fallback
+      - '7882:7882/udp'   # WebRTC UDP traffic
+    volumes:
+      - ./livekit.yaml:/etc/livekit.yaml:ro
+    networks:
+      - meetspace-net
+
+  # Backend API & Signaling Server
+  server:
+    build:
+      context: .
+      dockerfile: server/Dockerfile
+    container_name: meetspace-server
+    restart: always
+    ports:
+      - '5001:5001'
+    environment:
+      - PORT=5001
+      - NODE_ENV=production
+      - MONGODB_URI=mongodb://mongodb:27017/meetspace
+      - LIVEKIT_URL=http://livekit:7880
+      - LIVEKIT_API_KEY=devkey
+      - LIVEKIT_API_SECRET=secret
+      - CLIENT_URL=http://localhost:5173
+      - JWT_SECRET=super-secret-meetspace-jwt-token-key-2025-at-least-32-chars
+    depends_on:
+      - mongodb
+      - livekit
+    networks:
+      - meetspace-net
+
+  # Frontend Client
+  client:
+    build:
+      context: .
+      dockerfile: client/Dockerfile
+    container_name: meetspace-client
+    restart: always
+    ports:
+      - '5173:80'
+    depends_on:
+      - server
+    networks:
+      - meetspace-net
+
+volumes:
+  mongo_data:
+
+networks:
+  meetspace-net:
+    driver: bridge

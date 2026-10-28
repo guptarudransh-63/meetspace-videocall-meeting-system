@@ -1,0 +1,10 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+const express_1 = require("express");
+const recordingController_js_1 = require("../controllers/recordingController.js");
+const auth_js_1 = require("../middleware/auth.js");
+const router = (0, express_1.Router)();
+router.get('/:id/recordings', auth_js_1.requireAuth, recordingController_js_1.getRecordings);
+router.post('/:id/recordings/start', auth_js_1.requireAuth, recordingController_js_1.startRecording);
+router.post('/:id/recordings/stop', auth_js_1.requireAuth, recordingController_js_1.stopRecording);
+exports.default = router;

@@ -1,0 +1,11 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+const express_1 = require("express");
+const invitationController_js_1 = require("../controllers/invitationController.js");
+const auth_js_1 = require("../middleware/auth.js");
+const validate_js_1 = require("../middleware/validate.js");
+const router = (0, express_1.Router)();
+router.post('/:id/invite', auth_js_1.requireAuth, (0, validate_js_1.validateBody)(invitationController_js_1.inviteSchema), invitationController_js_1.createInvitations);
+router.get('/:id/invitations', auth_js_1.requireAuth, invitationController_js_1.getInvitations);
+router.get('/:id/ics', auth_js_1.optionalAuth, invitationController_js_1.downloadIcs);
+exports.default = router;
